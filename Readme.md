@@ -36,7 +36,10 @@ ________________________________________________________________________________
 
 <img width="1061" height="1365" alt="5" src="https://github.com/user-attachments/assets/58f6e5db-bba2-4aa0-b28c-e87b2474b603" />
 
-
+Enable Live folder motion for use!
 <img width="1054" height="496" alt="6" src="https://github.com/user-attachments/assets/0f752c68-17f4-45ac-9e38-d2f1e5191676" />
 
-Enable Live folder motion for use!
+If no gird selected show randomly in grid but can select zone for Live folder motion by holding Shift+ctrl and click on grids
+to appaire Live Zone on top-right of girds 
+
+
