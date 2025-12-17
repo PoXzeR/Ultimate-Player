@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ultimate Player</title>
+    <!-- Linking Styles -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="effects.css">
+</head>
+<body>
+
+    <!-- Drag & Drop Overlay -->
+    <div id="dropOverlay">
+        <div class="drop-icon">📂</div>
+        <div class="drop-text">Drop Files Here</div>
+    </div>
+
+    <!-- LANDING PAGE (Home Hub) -->
+    <div id="landingPage">
+        <div class="hub-title">Ultimate <span>Player</span></div>
+        
+        <!-- Mode Selection Cards -->
+        <div class="mode-cards">
+            <!-- VIDEO PLAYER CARD -->
+            <div class="mode-card" onclick="app.selectMode('video')">
+                <div class="icon-3d">
+                    <svg viewBox="0 0 64 64" width="64" height="64">
+                        <defs>
+                            <linearGradient id="gradVideo" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#818cf8;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#4338ca;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Clapperboard Base -->
+                        <rect x="4" y="24" width="56" height="36" rx="4" fill="url(#gradVideo)" />
+                        <!-- Clapperboard Top -->
+                        <path d="M4 12h56v10H4z" fill="#a5b4fc" />
+                        <!-- Clapper Stripes -->
+                        <path d="M14 12l-6 10h6l6-10h-6zm14 0l-6 10h6l6-10h-6zm14 0l-6 10h6l6-10h-6z" fill="#312e81" opacity="0.3"/>
+                    </svg>
+                </div>
+                <div class="card-title">Video Player</div>
+                <div class="card-desc">Single View</div>
+            </div>
+
+            <!-- SLIDESHOW CARD -->
+            <div class="mode-card" onclick="app.selectMode('slideshow')">
+                <div class="icon-3d">
+                    <svg viewBox="0 0 64 64" width="64" height="64">
+                        <defs>
+                            <linearGradient id="gradSky" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="gradMountain" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#34d399;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Frame -->
+                        <rect x="2" y="6" width="60" height="52" rx="2" fill="#d1d5db" />
+                        <rect x="6" y="10" width="52" height="44" fill="url(#gradSky)" />
+                        <!-- Sun -->
+                        <circle cx="48" cy="20" r="6" fill="#fbbf24" />
+                        <!-- Mountains -->
+                        <path d="M6 54l16-30 14 16 10-10 12 24H6z" fill="url(#gradMountain)" />
+                    </svg>
+                </div>
+                <div class="card-title">Slideshow Grid</div>
+                <div class="card-desc">Multi-View Grid</div>
+            </div>
+        </div>
+        
+        <!-- Editor & Exit Wrapper -->
+        <div class="landing-footer-col">
+            <div class="mode-card edit-mode-card" onclick="app.selectMode('edit')">
+                <div class="icon-3d">
+                    <svg viewBox="0 0 64 64" width="48" height="48">
+                        <defs>
+                            <linearGradient id="gradTools" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#94a3b8;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#475569;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Wrench -->
+                        <path d="M44 4l-4 4 6 6-4 4-6-6-4 4L4 52l8 8 36-28 4-4-6-6 4-4 6 6 4-4-16-16z" fill="url(#gradTools)" />
+                    </svg>
+                </div>
+                <div style="text-align:left;">
+                    <div class="card-title">Layout Editor Mode</div>
+                    <div class="card-desc">Create custom grid structures.</div>
+                </div>
+            </div>
+
+            <!-- BUTTON ROW: EXIT + LOCAL NETWORK -->
+            <div class="landing-btn-row">
+                <button class="home-exit-btn" onclick="app.exitApp()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Exit App
+                </button>
+
+                <button class="home-exit-btn broadcast-btn" id="serverToggleBtn" onclick="app.toggleServer()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
+                        <circle cx="12" cy="12" r="2"></circle>
+                        <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
+                    </svg>
+                    <span id="serverBtnText">Local Network</span>
+                </button>
+            </div>
+            
+            <!-- Server Info Display (URL shows here) -->
+            <div id="serverInfoDisplay" class="server-info"></div>
+        </div>
+
+        <!-- Credits -->
+        <div class="creator-box">
+            <span class="cb-made">Made by Gemeni 3</span>
+            <span class="cb-idea" style="font-weight: bold;font-size: larger;color:white;">Idea : PoXzeR</span>
+        </div>
+    </div>
+
+    <!-- MAIN APP INTERFACE -->
+    <div id="appInterface">
+        
+        <!-- CENTER STAGE (Video/Grid) -->
+        <div class="main-stage" id="mainStage">
+            
+            <!-- TOP LEFT CONTROLS: Home & Minimize -->
+            <div class="ctrl-left">
+                <button class="top-btn" id="homeBtn" onclick="app.goHome()" title="Home">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </button>
+                <button class="top-btn" id="minBtn" onclick="app.minimizeApp()" title="Minimize to Taskbar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            </div>
+            
+            <!-- TOP RIGHT CONTROLS: Fullscreen & Sidebar -->
+            <div class="ctrl-right">
+                
+                <!-- Fullscreen Dropdown -->
+                <div class="fs-container">
+                    <button class="top-btn" id="fsBtn" title="Fullscreen Options">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                    </button>
+                    <div class="fs-menu">
+                        <div class="fs-item" onclick="app.setFullscreen('full')">⬜ Full Screen</div>
+                        <div class="fs-item" onclick="app.setFullscreen('left')">▌ Left Half</div>
+                        <div class="fs-item" onclick="app.setFullscreen('right')">▐ Right Half</div>
+                        <div class="fs-item" onclick="app.setFullscreen('top')">▀ Top Half</div>
+                        <div class="fs-item" onclick="app.setFullscreen('bottom')">▄ Bottom Half</div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Toggle -->
+                <button class="top-btn" id="toggleSidebarBtn" title="Queue / Menu">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <!-- Empty State / Resume Prompt -->
+            <div id="emptyState" class="empty-state">
+                <h3 id="modeTitle">Player Ready</h3>
+                <div id="resumeBox" class="resume-box">
+                    <span>Found previous session: </span>
+                    <strong id="resumeName" style="color:white;">Filename</strong>
+                    <button class="resume-btn" onclick="app.resumePlayback()">Resume</button>
+                </div>
+            </div>
+            
+            <!-- Media Containers -->
+            <video id="videoPlayer" controls playsinline></video>
+            <img id="imageViewer">
+            <div id="gridContainer"></div>
+            
+            <!-- Keybind Hints Footer -->
+            <div id="shortcutsFooter" class="shortcuts-footer"></div>
+        </div>
+
+        <!-- Resize Handle -->
+        <div class="resizer" id="dragHandle"></div>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar" id="sidebar">
+            
+            <!-- SIDEBAR HEADER: Title & Pin Button -->
+            <div class="brand">
+                <span style="font-size:larger"> UltimatePlayer</span>
+                
+                <!-- Right Column: Pin Button + Badge -->
+                <div class="brand-right-col">
+                    <button id="pinBtn" class="pin-btn" onclick="app.toggleAlwaysOnTop()" title="Always on Top">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="17" x2="12" y2="22"></line>
+                            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path>
+                        </svg>
+                    </button>
+                    <span id="currentModeBadge" class="mode-badge">VIDEO</span>
+                </div>
+            </div>
+
+            <!-- Standard Sidebar Content -->
+            <div class="normal-sidebar">
+                <div class="btn-group">
+                    <!-- ADD FOLDER -->
+                    <label for="folderInput" class="upload-btn primary-folder-btn" style="height: auto; min-height: 60px;">
+                        <svg width="50" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span style="font-size: 0.8rem;">Add Folder</span>
+                        <div class="mobile-hide"><span style="font-size: 0.7rem; opacity:0.8; font-weight:normal;">drag and drop folder</span></div>
+                    </label>
+
+                    <!-- ADD FILES -->
+                    <label for="fileInput" class="upload-btn secondary" style="height: auto; min-height: 60px;">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="12" y1="18" x2="12" y2="12"></line>
+                            <line x1="9" y1="15" x2="15" y2="15"></line>
+                        </svg>
+                        <span style="font-size: 0.8;">Add Files</span>
+                        <div class="mobile-hide"><span style="font-size: 0.7rem; opacity:0.7; font-weight:normal;">drag and drop Files</span></div>
+                    </label>
+                </div>
+                
+                <!-- LIVE FOLDER BUTTON (Hidden by default via CSS) -->
+                <button id="liveFolderBtn" class="upload-btn live-folder-btn" style="margin-bottom: 15px; width:100%; height: 50px; flex-direction: row; gap: 10px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 7l-7 5 7 5V7z"></path>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                    <span>Live Folder Motion</span>
+                </button>
+                
+                <input type="file" id="folderInput" webkitdirectory directory multiple>
+                <input type="file" id="fileInput" multiple accept="video/*, image/*, .mkv, .ts, .m2ts, .webp">
+
+                <!-- Player Controls -->
+                <div class="controls-wrapper">
+                    <div class="tools-row">
+                        <button id="prevBtn" class="tool-btn" title="Previous">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"></path></svg>
+                        </button>
+                        <button id="playPauseBtn" class="tool-btn" title="Play/Pause">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"></path></svg>
+                        </button>
+                        <button id="nextBtn" class="tool-btn" title="Next">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"></path></svg>
+                        </button>
+                    </div>
+                    <div class="tools-row">
+                        <button id="shuffleBtn" class="tool-btn" title="Shuffle">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                        </button>
+                        <button id="globalMuteBtn" class="tool-btn" title="Mute/Unmute All">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                        </button>
+                        <button id="settingsBtn" class="tool-btn" title="Settings">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Global Volume -->
+                    <div class="global-volume-row">
+                        <span id="globalVolIcon" style="cursor:pointer; width:24px; text-align:center; display:flex; justify-content:center; align-items:center;" onclick="app.toggleGlobalMute()" title="Toggle Mute">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                        </span>
+                        <input type="range" id="globalVolSlider" min="0" max="1" step="0.05" value="1" title="Global Volume Control">
+                        <span id="globalVolDisplay" style="font-size:0.8rem; width:35px; text-align:right; font-variant-numeric:tabular-nums;">100%</span>
+                    </div>
+
+                    <!-- Playback Speed -->
+                    <div class="global-volume-row" style="margin-top:5px;">
+                        <span style="cursor:pointer; width:24px; text-align:center; display:flex; justify-content:center; align-items:center;" onclick="app.setPlaybackSpeed(1)" title="Reset Speed">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                        </span>
+                        <input type="range" id="speedSlider" min="0.25" max="10" step="0.25" value="1" title="Playback Speed">
+                        <span id="speedDisplay" style="font-size:0.8rem; width:35px; text-align:right; font-variant-numeric:tabular-nums;width:24px">1x</span>
+                    </div>
+                </div>
+
+                <!-- Playlist / Queue -->
+                <div class="playlist-header">
+                    <span>Queue <span id="queueCount">(0)</span></span>
+                    
+                    <!-- Split Clear Buttons with SVG Icons -->
+                    <div class="clear-btn-group">
+                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-right: 4px;">Remove:</span>
+                        <button class="clear-icon-btn btn-clear-img" id="clearImagesBtn" title="Remove All Images">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                                <line x1="15" y1="3" x2="21" y2="9" stroke="red" stroke-width="2" style="opacity:0.8"></line>
+                            </svg>
+                        </button>
+                        <button class="clear-icon-btn btn-clear-vid" id="clearVideosBtn" title="Remove All Videos">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                                <line x1="7" y1="2" x2="7" y2="22"></line>
+                                <line x1="17" y1="2" x2="17" y2="22"></line>
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <line x1="2" y1="7" x2="7" y2="7"></line>
+                                <line x1="2" y1="17" x2="7" y2="17"></line>
+                                <line x1="17" y1="17" x2="22" y2="17"></line>
+                                <line x1="17" y1="7" x2="22" y2="7"></line>
+                                <line x1="15" y1="2" x2="22" y2="9" stroke="#6366f1" stroke-width="2" style="opacity:0.8"></line>
+                            </svg>
+                        </button>
+                        <button class="clear-icon-btn btn-clear-all" id="clearAllBtn" title="Clear Entire Queue">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="playlist-items" id="playlistContainer"></div>
+
+                <!-- QUEUE FILTER BAR -->
+                <div class="queue-filter-bar">
+                    <span class="filter-label">Show:</span>
+                    <button class="clear-icon-btn filter-btn active" id="filterAllBtn" title="Show All">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </button>
+                    <button class="clear-icon-btn filter-btn" id="filterImgBtn" title="Show Images Only">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </button>
+                    <button class="clear-icon-btn filter-btn" id="filterVidBtn" title="Show Videos Only">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                            <line x1="7" y1="2" x2="7" y2="22"></line>
+                            <line x1="17" y1="2" x2="17" y2="22"></line>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <line x1="2" y1="7" x2="7" y2="7"></line>
+                            <line x1="2" y1="17" x2="7" y2="17"></line>
+                            <line x1="17" y1="17" x2="22" y2="17"></line>
+                            <line x1="17" y1="7" x2="22" y2="7"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Background Music -->
+                <div id="musicSection">
+                    <div class="music-header" onclick="app.toggleMusicPanel()" style="cursor:pointer;">
+                        <span>🎵 Background Music</span>
+                        <div class="toggle-icon-btn" id="musicToggleBtn">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <div id="musicBody" class="music-body collapsed">
+                        <div style="display:flex; gap:10px; margin-bottom:8px;">
+                            <label for="musicInput" class="music-action-btn" style="color:var(--accent);">+ ADD</label>
+                            <span id="clearMusicBtn" class="music-action-btn" style="color:#ff5555">× CLEAR</span>
+                        </div>
+                        <input type="file" id="musicInput" multiple accept="audio/*, video/*">
+                        <div class="music-controls">
+                            <div id="musicName" class="music-info">No music loaded</div>
+                            <div class="music-row">
+                                <button id="musicPlayBtn" class="tool-btn" style="height:30px; width:30px; flex:none;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"></path></svg>
+                                </button>
+                                <input type="range" id="musicVol" min="0" max="1" step="0.1" value="0.3" title="Music Volume">
+                            </div>
+                        </div>
+                        <audio id="bgAudio" loop></audio>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Editor Sidebar Content -->
+            <div class="editor-sidebar">
+                <div class="section-title">Editor Actions</div>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button class="upload-btn" onclick="app.applyEditorChanges()" style="flex:1; background:#22c55e; flex-direction: row; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg> 
+                        Apply
+                    </button>
+                    <button class="upload-btn secondary" onclick="app.goHome()" style="flex:1; border-color:#ff5555; color:#ff5555; flex-direction: row; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg> 
+                        Exit
+                    </button>
+                </div>
+                
+                <div class="section-title">Filter Settings</div>
+                
+                <div class="check-row" style="background:rgba(255,255,255,0.05); padding:10px; border-radius:6px 6px 0 0; margin-bottom:1px; border:1px solid #3f3f46;">
+                    <label for="editorQueueInfo" style="font-size:0.85rem; cursor:pointer; flex:1;">Show Queue File Info (Res/Ratio)</label>
+                    <input type="checkbox" id="editorQueueInfo">
+                </div>
+                
+                <div class="check-row" style="background:rgba(255,255,255,0.05); padding:10px; border-radius:0 0 6px 6px; margin-bottom:15px; border:1px solid #3f3f46; border-top:none;">
+                    <label for="autoFallbackToggle" style="font-size:0.85rem; cursor:pointer; flex:1;" title="If Auto Match fails to find a perfect fit, play the closest matching file instead of showing nothing.">Auto Match Fallback</label>
+                    <input type="checkbox" id="autoFallbackToggle">
+                </div>
+                
+                <div class="section-title">Layout Library</div>
+                <input type="text" id="layoutName" placeholder="Layout Name..." class="sidebar-input">
+                
+                <button class="tool-btn" onclick="app.saveToLibrary()" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Save to Library
+                </button>
+                
+                <div style="display:flex; gap:5px; margin-top:10px;">
+                    <select id="savedLayoutsSelect" style="flex:1;"></select>
+                    <button class="tool-btn" style="flex:0 0 40px;" onclick="app.deleteLibraryItem()" title="Delete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                </div>
+                
+                <button class="upload-btn secondary" onclick="app.loadLibraryItem()" style="margin-top:5px; flex-direction: row; gap: 8px; height: 50px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Load Selected
+                </button>
+
+                <div style="display:flex; gap:5px; margin-top:15px;">
+                    <button class="tool-btn" onclick="app.exportLayouts()" style="display: flex; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export
+                    </button>
+                    <label class="tool-btn" style="cursor:pointer; display: flex; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Import <input type="file" id="importLayoutInput" accept=".json" style="display:none" onchange="app.importLayouts(this)">
+                    </label>
+                </div>
+
+                <button class="upload-btn secondary" onclick="app.resetLayout()" style="margin-top:20px; flex-direction: row; gap: 8px; height: 50px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    Clear Grid
+                </button>
+                
+                <div class="editor-controls" style="margin-top:15px; background:rgba(255,255,255,0.05); padding:10px; border-radius:6px;">
+                    <div style="margin-bottom:10px; font-weight:bold; font-size:0.8rem; color:#aaa;">Selection Modes:</div>
+                    
+                    <div style="display:flex; align-items:center; margin-bottom:10px;">
+                        <label class="switch">
+                            <input type="checkbox" id="shiftCheck" onchange="app.toggleShift(this.checked)">
+                            <span class="slider round orange-toggle"></span>
+                        </label>
+                        <span class="toggle-label" style="color:#f97316;">Multi-Select (Shift)</span>
+                    </div>
+
+                    <div style="display:flex; align-items:center; margin-bottom:15px;">
+                        <label class="switch">
+                            <input type="checkbox" id="ctrlCheck" onchange="app.toggleCtrl(this.checked)">
+                            <span class="slider round white-toggle"></span>
+                        </label>
+                        <span class="toggle-label" style="color:#ffffff;">Select All (Ctrl)</span>
+                    </div>
+
+                    <button class="tool-btn" onclick="app.performUndo()" 
+                            style="width:100%; border-color:#22c55e; color:#22c55e; font-weight:bold; display: flex; justify-content: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        Undo (Ctrl+Shift+Z)
+                    </button>
+                </div>
+
+                <div class="card-desc" style="margin-top:15px; font-size:0.8rem;">
+                    Tap a cell to edit it. Use buttons to Split, Resize, or Delete.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header"><h2>Settings</h2></div>
+            <div class="modal-body">
+                
+                <div class="section-title">Appearance</div>
+                <div class="setting-group">
+                    <label>Accent Color</label>
+                    <div class="color-presets">
+                        <div class="color-dot" style="background:#6366f1" onclick="app.setTheme('#6366f1')"></div>
+                        <div class="color-dot" style="background:#ef4444" onclick="app.setTheme('#ef4444')"></div>
+                        <div class="color-dot" style="background:#22c55e" onclick="app.setTheme('#22c55e')"></div>
+                        <div class="color-dot" style="background:#f97316" onclick="app.setTheme('#f97316')"></div>
+                        <div class="color-dot" style="background:#ec4899" onclick="app.setTheme('#ec4899')"></div>
+                        <label class="color-picker-label" title="Custom Accent">
+                            <input type="color" id="accentPicker" onchange="app.setTheme(this.value)">
+                            <span>🎨</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>Background Color</label>
+                    <div class="color-presets">
+                        <div class="color-dot" style="background:#0f0f13" onclick="app.setBg(0)" title="Default"></div>
+                        <div class="color-dot" style="background:#000000" onclick="app.setBg(1)" title="OLED"></div>
+                        <div class="color-dot" style="background:#0b1120" onclick="app.setBg(2)" title="Navy"></div>
+                        <div class="color-dot" style="background:#171717" onclick="app.setBg(3)" title="Dark Gray"></div>
+                        <div class="color-dot" style="background:#05100b" onclick="app.setBg(4)" title="Forest"></div>
+                        <div class="color-dot" style="background:#160808" onclick="app.setBg(5)" title="Maroon"></div>
+                        <div class="color-dot" style="background:#0f0e16" onclick="app.setBg(6)" title="Deep Purple"></div>
+                        <div class="color-dot" style="background:#16110d" onclick="app.setBg(7)" title="Coffee"></div>
+                        <label class="color-picker-label" title="Custom Background">
+                            <input type="color" id="bgPicker" onchange="app.setCustomBg(this.value)">
+                            <span>🎨</span>
+                        </label>
+                        <label class="color-picker-label" title="Upload Background Image" style="background-color: #444;">
+                            <input type="file" id="bgImageInput" accept="image/*" onchange="app.handleBgImage(this)">
+                            <span style="font-size: 1.2rem;">🖼️</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- VISUAL ADJUSTMENTS -->
+                <div class="visual-header options-header" onclick="app.toggleVisualPanel()" style="margin-top: 15px;">
+                    <span>Visual Adjustments</span>
+                    <div class="toggle-icon-btn" id="visualToggleBtn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <div id="visualBody" class="visual-body collapsed">
+                    <div style="padding: 10px;">
+                        <div style="display:flex; justify-content: flex-end; margin-bottom:10px;">
+                            <button class="type-btn" onclick="app.resetVisualFilters()" style="padding: 4px 12px;">↺ Reset Filters</button>
+                        </div>
+                        <div class="setting-group">
+                            <label>Apply To:</label>
+                            <select id="filterTarget" onchange="app.updateVisualFilters()">
+                                <option value="all">All Content</option>
+                                <option value="video">Videos Only</option>
+                                <option value="image">Images Only</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label>Brightness</label>
+                            <input type="range" id="brightInput" min="0" max="200" value="100" oninput="app.updateVisualFilters()">
+                        </div>
+                        <div class="setting-group">
+                            <label>Contrast</label>
+                            <input type="range" id="contrastInput" min="0" max="200" value="100" oninput="app.updateVisualFilters()">
+                        </div>
+                        <div class="setting-group">
+                            <label>Saturation</label>
+                            <input type="range" id="satInput" min="0" max="200" value="100" oninput="app.updateVisualFilters()">
+                        </div>
+                        <div class="setting-group">
+                            <label>Hue Rotate</label>
+                            <input type="range" id="hueInput" min="0" max="360" value="0" oninput="app.updateVisualFilters()">
+                        </div>
+                        <div class="setting-group">
+                            <label>Invert Colors</label>
+                            <input type="range" id="invertInput" min="0" max="100" value="0" oninput="app.updateVisualFilters()">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-title" style="margin-top:20px;">Grid Options</div>
+                <div class="setting-group">
+                    <label>Items per Screen</label>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <select id="gridCountSelect" style="flex: 1;"></select>
+                        <button id="applyGridBtn" class="tool-btn" style="width: auto; height: 30px; padding: 0 10px; font-size: 0.8rem; font-weight: bold; flex: 0 0 auto;">Apply</button>
+                    </div>
+                </div>
+
+                <div class="visual-header options-header" onclick="app.toggleGridSettings()" style="margin-top:10px; margin-bottom:10px;">
+                    <span>Advanced Grid Styling</span>
+                    <div class="toggle-icon-btn" id="gridSettingsToggleBtn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <div id="gridSettingsBody" class="visual-body options-body collapsed">
+                    <div style="padding: 10px;">
+                        <div class="setting-group">
+                            <label>Grid Gap Size: <strong id="gapSizeVal">10</strong>px</label>
+                            <input type="range" min="0" max="50" value="10" id="gapSizeInput">
+                        </div>
+                        <div class="setting-group">
+                            <label>Corner Roundness: <strong id="gridRoundVal">0</strong>px</label>
+                            <input type="range" min="0" max="50" value="0" id="gridRoundInput">
+                        </div>
+                        <div class="setting-group">
+                            <label>Grid Max FPS: <strong id="gridFpsVal">60</strong></label>
+                            <input type="range" min="1" max="60" value="60" id="gridFpsInput">
+                            <label style="font-size:0.7rem; color:#666; margin-top:4px;">(Lower values save CPU/GPU. 60 = Native Speed)</label>
+                        </div>
+                        
+                        <!-- RATIO TOLERANCE SLIDER -->
+                        <div class="setting-group" style="border-top: 1px solid #444; padding-top: 15px; margin-top: 15px;">
+                            <label>Auto-Ratio Tolerance: <strong id="ratioTolVal">0.3</strong></label>
+                            <input type="range" min="0" max="1" step="0.05" value="0.3" id="ratioTolInput">
+                            <label style="font-size:0.7rem; color:#aaa; margin-top:4px; display:block; line-height: 1.3;">
+                                <strong>0.0</strong> = Strict Exact Match.<br>
+                                <strong>0.3</strong> = Standard (Allows slightly different shapes).<br>
+                                <strong>1.0</strong> = Very Loose (Matches almost anything).
+                            </label>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <!-- NEW GRID BORDERS SECTION -->
+                <div class="visual-header options-header" onclick="app.toggleBorderSettings()" style="margin-top:10px; margin-bottom:10px;">
+                    <span>Grid Borders</span>
+                    <div class="toggle-icon-btn" id="borderSettingsToggleBtn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <div id="borderSettingsBody" class="visual-body options-body collapsed">
+                    <div style="padding: 10px;">
+                        
+                        <!-- 1. Rainbow Color Slider -->
+                        <div class="setting-group">
+                            <label>Border Color</label>
+                            <input type="range" min="0" max="360" value="0" id="borderHueInput" class="rainbow-slider" oninput="app.updateBorderSettings()">
+                        </div>
+
+                        <!-- 2. Transparency Slider -->
+                        <div class="setting-group">
+                            <label>Transparency: <strong id="borderAlphaVal">1.0</strong></label>
+                            <input type="range" min="0" max="1" step="0.05" value="1" id="borderAlphaInput" oninput="app.updateBorderSettings()">
+                        </div>
+
+                        <!-- 3. Brightness / Mix Slider (Black <-> Color <-> White) -->
+                        <div class="setting-group">
+                            <label>Brightness / Mix: <strong id="borderLightVal">Color</strong></label>
+                            
+                            <!-- Range: 0 (Black) to 50 (Color) to 100 (White) -->
+                            <input type="range" min="0" max="100" value="50" id="borderLightInput" class="lightness-slider" oninput="app.updateBorderSettings()">
+                            
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#888; margin-top:4px; font-weight:bold;">
+                                <span>Black</span>
+                                <span>Pure Color</span>
+                                <span>White</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                
+                <button class="upload-btn editor-launch-btn" onclick="app.saveActiveAndExit(); app.selectMode('edit'); document.getElementById('settingsModal').classList.remove('open');" style="width:100%; height: 50px; flex-direction: row; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>
+                    Open Layout Editor
+                </button>
+
+                <div class="setting-group" style="margin-top: 20px;">
+                    <label>Transition Effect (15 New Styles)</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="effectSelect" style="flex: 1;">
+                            <option value="none">0. No Effect</option>
+                            <option value="fade">1. Fade (Classic)</option>
+                            <option value="zoom-in">2. Zoom In</option>
+                            <option value="zoom-out">3. Zoom Out</option>
+                            <option value="slide-up">4. Slide Up</option>
+                            <option value="slide-down">5. Slide Down</option>
+                            <option value="slide-left">6. Slide Left</option>
+                            <option value="slide-right">7. Slide Right</option>
+                            <option value="spin">8. Spin</option>
+                            <option value="flip-x">9. Flip Horizontal</option>
+                            <option value="flip-y">10. Flip Vertical</option>
+                            <option value="blur">11. Blur Reveal</option>
+                            <option value="elastic">12. Elastic Pop</option>
+                            <option value="flash">13. Flash</option>
+                            <option value="swing">14. Swing</option>
+                            <option value="glitch">15. Glitch</option>
+                        </select>
+                        <div style="display: flex; align-items: center; gap: 5px;" title="Pick a random effect for every image">
+                            <input type="checkbox" id="randomEffectToggle" style="width: 18px; height: 18px;">
+                            <label for="randomEffectToggle" style="margin: 0; font-size: 0.8rem; cursor: pointer; white-space: nowrap;">Random</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visual-header options-header" onclick="app.toggleTransitionSettings()" style="margin-top:10px; margin-bottom:10px;">
+                    <span>Timing & Speed</span>
+                    <div class="toggle-icon-btn" id="transitionSettingsToggleBtn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <div id="transitionSettingsBody" class="visual-body options-body collapsed">
+                    <div style="padding: 10px;">
+                        <div class="setting-group">
+                            <label>Image Duration: <strong id="slideTimeVal">5</strong>s</label>
+                            <input type="range" min="2" max="30" value="5" id="slideTimeInput">
+                            
+                            <!-- NEW RANDOM DURATION CHECKBOX -->
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; justify-content: flex-end;">
+                                <input type="checkbox" id="randomDurToggle" style="width: 16px; height: 16px;">
+                                <label for="randomDurToggle" style="margin: 0; font-size: 0.8rem; color: #ccc; cursor: pointer;">Random Duration (5s - 30s)</label>
+                            </div>
+
+                            <label style="font-size:0.7rem; color:#666; margin-top:4px;">(Videos always play full duration)</label>
+                        </div>
+                        <div class="setting-group">
+                            <label>Effect Speed: <strong id="fxSpeedVal">0.8</strong>s</label>
+                            <input type="range" min="0.5" max="4.0" step="0.1" value="0.8" id="fxSpeedInput">
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+
+                <div class="visual-header options-header" onclick="app.toggleOptionsPanel()">
+                    <span>Options:</span>
+                    <div class="toggle-icon-btn" id="optionsToggleBtn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <div id="optionsBody" class="visual-body options-body collapsed">
+                    <div style="padding: 10px;">
+                        <div class="check-row">
+                            <label>OLED Mode (Pure Black)</label>
+                            <input type="checkbox" id="oledToggle">
+                        </div>
+                        <div class="check-row">
+                             <label>Stay awake (phone)</label>
+                            <input type="checkbox" id="wakeLockToggle">
+                        </div>
+                        <div class="check-row">
+                            <label>Show Keyboard Shortcuts Bar</label>
+                            <input type="checkbox" id="shortcutsToggle" checked>
+                        </div>
+                        <div class="check-row">
+                            <label>Show Queue File Info (Res/Ratio)</label>
+                            <input type="checkbox" id="queueInfoToggle">
+                        </div>
+                        
+                        <label style="font-size:0.7rem; color:#666; display:block;">
+                            (Calculates Resolution & Aspect Ratio. May slow down large lists.)
+                        </label>
+                        
+                        <!-- NEW LIVE FOLDER TOGGLE -->
+                        <div class="check-row" style="border-top: 1px solid #444; padding-top: 10px; margin-top: 5px;">
+                            <label style="color: #ec4899; font-weight: bold;">Enable Live Folder Motion</label>
+                            <input type="checkbox" id="liveFolderToggle">
+                        </div>
+                        <div class="setting-group" id="liveSortGroup" style="margin-top: 5px; margin-bottom: 15px; padding-left: 10px; border-left: 2px solid #ec4899; display: none;">
+                                <label style="font-size: 0.85rem; color: #ccc; margin-bottom: 5px;">Playback Order</label>
+                                <select id="liveSortSelect" style="padding: 5px; font-size: 0.85rem;">
+                                <option value="sequential">Sequential (1 ➡ 2 ➡ 3)</option>
+                                <option value="random">Random Shuffle 🔀</option>
+                                </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="visual-header shortcuts-header" onclick="app.toggleShortcutsPanel()" style="margin-top:20px;">
+                    <span>Keyboard Shortcuts</span>
+                    <div class="toggle-icon-btn" id="shortcutsToggleBtn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <div id="shortcutsBody" class="visual-body shortcuts-body collapsed">
+                    <div style="padding: 10px;">
+                        <div id="keybindList"></div>
+                        <button class="upload-btn secondary" id="resetKeysBtn" style="width:100%; margin-top:10px;">Reset Default Keys</button>
+                    </div>
+                </div>
+                
+            </div>
+            <!-- Updated Footer to remove settings-open class -->
+            <div class="modal-footer">
+                <button class="close-btn" onclick="document.body.classList.remove('settings-open'); document.getElementById('settingsModal').classList.remove('open')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE FOLDER MANAGER MODAL -->
+    <div class="modal-overlay" id="liveFolderModal">
+        <div class="modal" style="width: 500px; height: 485px;">
+            <div class="modal-header">
+                <h2>Live Folder Manager</h2>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+                
+                <p style="color: #888; font-size: 0.9rem;">
+                    Monitoring folders for new images/videos. Content plays instantly upon detection. Subfolders are ignored.
+                </p>
+
+                <!-- Add Folder Button inside Modal -->
+                <button class="upload-btn primary-folder-btn" onclick="app.addLiveFolderDialog()" style="height: 50px; flex-direction: row; gap: 10px; border: 1px solid #6366f1;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        <line x1="12" y1="11" x2="12" y2="17"></line>
+                        <line x1="9" y1="14" x2="15" y2="14"></line>
+                    </svg>
+                    Add Folder
+                </button>
+
+                <div class="section-title">Active Watch List</div>
+                
+                <!-- List Container -->
+                <div id="liveFolderList" class="playlist-items" style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid #333;min-height: 120px;">
+                    <!-- Items injected via JS -->
+                </div>
+
+            </div>
+            
+            <!-- UPDATED FOOTER -->
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="close-btn" onclick="app.clearLiveQueue()" style="height: 36px; width: auto; font-size: 0.8rem; padding: 0 15px; background: #3f3f46; color: #ffaaaa; border-color: #552222;">
+                    Clear Live Files
+                </button>
+                <!-- Added settings-open removal -->
+                <button class="close-btn" onclick="document.body.classList.remove('settings-open'); document.getElementById('liveFolderModal').classList.remove('open')">Close Manager</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXIT CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="exitModal">
+        <div class="modal" style="width: 320px; height: auto;">
+            <div class="modal-header" style="justify-content: center; background: rgba(255, 85, 85, 0.1);">
+                <h2 style="color: #ff5555;">Exit Application?</h2>
+            </div>
+            <div class="modal-body" style="text-align: center; padding: 30px 20px;">
+                <p style="color: var(--text-muted); margin: 0; font-size: 1rem;">
+                    Are you sure you want to close UltimatePlayer?
+                </p>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: center;">
+                <button class="upload-btn secondary" onclick="app.closeExitModal()" style="flex: 1;">Cancel</button>
+                <button class="upload-btn" onclick="app.confirmExit()" style="flex: 1; background-color: #ff5555;">Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container"></div>
+
+    <script src="store.js"></script>
+    <script src="grid.js"></script>
+    <script src="utils.js"></script>
+    <script src="media-engine.js"></script>
+    <script src="app-controller.js"></script> 
+</body>
+</html>

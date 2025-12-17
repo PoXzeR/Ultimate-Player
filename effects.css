@@ -1,0 +1,94 @@
+/* --- EFFECTS.CSS: 15 Cool Slideshow Transitions --- */
+
+/* 1. Base State for Media (Before Animation Starts) */
+/* This defines how images/videos look BEFORE they become active. */
+.grid-cell video, .grid-cell img, .grid-cell canvas {
+    width: 100%; 
+    height: 100%; 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    pointer-events: none;
+    
+    /* Global Transition Settings */
+    /* All properties animate over the time defined by --fx-speed */
+    transition: all var(--fx-speed, 0.8s) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    
+    /* Hardware acceleration hints */
+    will-change: transform, opacity, filter, clip-path;
+    transform-origin: center center;
+    
+    /* Layering: New content sits at 10. Active sits at 20. Old sits at 1. */
+    z-index: 10; 
+}
+
+/* --- 2. THE 15 EFFECT CLASSES (Start States) --- */
+/* These classes set the initial state of the element before it appears. */
+
+/* 1. Fade (Classic) */
+.fx-fade { opacity: 0; }
+
+/* 2. Zoom In (Grow from center) */
+.fx-zoom-in { opacity: 0; transform: scale(0.5); }
+
+/* 3. Zoom Out (Shrink from huge) */
+.fx-zoom-out { opacity: 0; transform: scale(1.5); }
+
+/* 4. Slide Up */
+.fx-slide-up { opacity: 0; transform: translateY(100%); }
+
+/* 5. Slide Down */
+.fx-slide-down { opacity: 0; transform: translateY(-100%); }
+
+/* 6. Slide Left */
+.fx-slide-left { opacity: 0; transform: translateX(100%); }
+
+/* 7. Slide Right */
+.fx-slide-right { opacity: 0; transform: translateX(-100%); }
+
+/* 8. Spin (Rotates in) */
+.fx-spin { opacity: 0; transform: rotate(-180deg) scale(0.2); }
+
+/* 9. Flip Horizontal (3D Card Flip) */
+.fx-flip-x { opacity: 0; transform: perspective(1000px) rotateY(90deg); backface-visibility: hidden; }
+
+/* 10. Flip Vertical (3D Card Flip) */
+.fx-flip-y { opacity: 0; transform: perspective(1000px) rotateX(90deg); backface-visibility: hidden; }
+
+/* 11. Blur Reveal */
+.fx-blur { opacity: 0; filter: blur(20px); transform: scale(1.1); }
+
+/* 12. Elastic Pop (Bouncy feel via bezier override) */
+.fx-elastic { opacity: 0; transform: scale(0.3); transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+
+/* 13. Flash (Brighten) */
+.fx-flash { opacity: 0; filter: brightness(300%) contrast(200%); }
+
+/* 14. Swing (Hinge effect from top) */
+.fx-swing { opacity: 0; transform-origin: top center; transform: perspective(1000px) rotateX(-90deg); }
+
+/* 15. Glitch (Chromatic Shift) */
+.fx-glitch { opacity: 0; transform: scale(1.1) translateX(5px); filter: contrast(150%) hue-rotate(90deg); }
+
+
+/* --- 3. ACTIVE STATE (The "Normal" View) --- */
+/* When this class is added via JS, the element transitions from the effect state to this state. */
+.media-active {
+    opacity: 1 !important;
+    transform: translate(0, 0) scale(1) rotate(0) !important;
+    filter: var(--filter-image, none) !important; /* Respect user's visual settings */
+    clip-path: inset(0) !important;
+    z-index: 20 !important; /* Bring to front */
+}
+
+/* Specific override for video to keep user brightness/contrast settings */
+video.media-active { 
+    filter: var(--filter-video, none) !important; 
+}
+
+/* --- 4. OLD MEDIA (Exit State) --- */
+/* The previous image/video stays visible behind the new one to create a smooth crossfade/cover. */
+.media-old {
+    z-index: 1 !important; /* Move to back */
+    pointer-events: none;
+}
