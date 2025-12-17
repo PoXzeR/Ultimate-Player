@@ -1,11 +1,19 @@
 Hello there.its PoXzeR!
+
 This is Ultimate Player for play images and videos as slideshow at togheter with conttroble girds(cells).
+
 This app coded by GEMINI 3.
+
 The main focuse is on slideshow and layout editor
+
 Almost any things in this app can be customizable however you wants!
+
 I sugest look around and see options what in it befor work with it
+
 To lunch app you can download app or download all files and run with command prompt in window
+
 First command :npm install electron --save-dev
+
 Right after :npm run dist
 
 Software size will be around 80-200MB
