@@ -26,6 +26,7 @@ This isn't not perfect and have some bugs!close and relunche app always works
 Enjoy using Ultimate Player! :)
 _____________________________________________________________________________________________________
 
+blue line its for drag and move! works in any mode
 <img width="1279" height="717" alt="1" src="https://github.com/user-attachments/assets/09a1ad2e-9567-4216-bb84-ea667992c7b4" />
 
 <img width="1277" height="719" alt="2" src="https://github.com/user-attachments/assets/6f05cec7-fe39-45fb-b290-137686a41298" />
@@ -41,5 +42,6 @@ Enable Live folder motion for use!
 
 If no gird selected show randomly in grid but can select zone for Live folder motion by holding Shift+ctrl and click on grids
 to appaire Live Zone on top-right of girds 
+
 
 
