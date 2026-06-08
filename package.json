@@ -1,406 +1,93 @@
-// ============================================================
-//  store.js  —  Persistence, global state, theme helpers
-//
-//  Fixes vs original:
-//  · isElectron detection is renderer-safe (no node check that
-//    can false-positive in some sandboxed builds).
-//  · readJSON: null-safe — JSON.parse can return 0/false/""
-//    which would be overridden by `|| defaultVal` in the original.
-//    Now only falls back when the result is truly null/undefined.
-//  · writeInternal: temp-file + rename pattern for Electron so
-//    a crash mid-write never corrupts the JSON file.
-//  · defaultKeys now includes 'ramFlush' (KeyG default) so the
-//    RAM-flush shortcut added in media-engine/app-controller
-//    has a persisted slot from day one.
-//  · window.settings deep-merges nested objects (filters,
-//    borderSettings, notificationSettings) so adding a new
-//    nested key in a future version doesn't silently vanish
-//    when old settings are loaded from disk.
-//  · adjustBrightness: rewrote without implicit global mutation
-//    (original mutated the `col` parameter directly).
-//  · saveCustomLayout / getCustomLayout exposed on window so
-//    grid.js / layout editor can call them without circular deps.
-//  · beforeunload: only saves state when a valid track exists
-//    and track index is in bounds — same as before, but guarded.
-// ============================================================
-
-'use strict';
-
-// ── ELECTRON DETECTION ────────────────────────────────────────
-// `process` exists in Electron's renderer with nodeIntegration=true.
-// We guard against the case where `process` is a stub (web workers,
-// some bundlers polyfill it as an empty object).
-const isElectron = (
-    typeof process !== 'undefined' &&
-    typeof process.versions === 'object' &&
-    typeof process.versions.electron === 'string'
-);
-window.isElectron = isElectron;
-
-// ── NODE MODULES (Electron only) ─────────────────────────────
-let _fs   = null;
-let _path = null;
-
-if (isElectron) {
-    try {
-        _fs   = require('fs');
-        _path = require('path');
-    } catch (e) {
-        console.error('[store] Failed to load Node modules:', e);
-    }
-}
-
-// ── PORTABLE DATA PATHS ───────────────────────────────────────
-let DATA_DIR = '';
-const FILES  = {};
-
-if (isElectron && _fs && _path) {
-    try {
-        const isPackaged = !process.defaultApp && !/node_modules/.test(process.execPath);
-        const baseDir    = isPackaged ? _path.dirname(process.execPath) : __dirname;
-        DATA_DIR         = _path.join(baseDir, 'data');
-
-        if (!_fs.existsSync(DATA_DIR)) {
-            _fs.mkdirSync(DATA_DIR, { recursive: true });
-        }
-
-        FILES.settings  = _path.join(DATA_DIR, 'settings.json');
-        FILES.shortcuts = _path.join(DATA_DIR, 'shortcuts.json');
-        FILES.layouts   = _path.join(DATA_DIR, 'layouts.json');
-        FILES.custom    = _path.join(DATA_DIR, 'custom_layout.json');
-        FILES.state     = _path.join(DATA_DIR, 'state.json');
-    } catch (e) {
-        console.error('[store] Data path setup failed:', e);
-    }
-} else {
-    // Web / localStorage keys
-    FILES.settings  = 'up_settings';
-    FILES.shortcuts = 'up_shortcuts';
-    FILES.layouts   = 'up_layouts';
-    FILES.custom    = 'up_custom';
-    FILES.state     = 'up_state';
-}
-
-// ── I/O ───────────────────────────────────────────────────────
-/**
- * Read a JSON file (Electron) or localStorage key (web).
- * Returns `defaultVal` when the file is absent, empty, or unparseable.
- * Does NOT use `|| defaultVal` — that would discard a valid `false` or `0`.
- */
-function readJSON(fileKey, defaultVal) {
-    if (isElectron && _fs) {
-        try {
-            if (_fs.existsSync(fileKey)) {
-                const raw = _fs.readFileSync(fileKey, 'utf-8').trim();
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    // null is valid JSON but useless as a settings object
-                    return (parsed !== null && parsed !== undefined) ? parsed : defaultVal;
-                }
-            }
-        } catch { /* corrupt file — fall through to default */ }
-    } else {
-        try {
-            const raw = localStorage.getItem(fileKey);
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                return (parsed !== null && parsed !== undefined) ? parsed : defaultVal;
-            }
-        } catch { /* quota exceeded or corrupt — fall through */ }
-    }
-    return defaultVal;
-}
-
-/**
- * Write JSON safely.
- * In Electron: write to a temp file first, then rename — if the process
- * crashes mid-write the old file survives intact.
- * In browser: localStorage.setItem (best-effort, no atomicity needed).
- */
-function writeInternal(fileKey, data) {
-    if (isElectron && _fs && _path) {
-        const tmp = fileKey + '.tmp';
-        try {
-            _fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
-            _fs.renameSync(tmp, fileKey);
-        } catch (e) {
-            console.error('[store] Save failed:', fileKey, e);
-            // Try to clean up the temp file if rename failed
-            try { _fs.unlinkSync(tmp); } catch { /* ignore */ }
-        }
-    } else {
-        try {
-            localStorage.setItem(fileKey, JSON.stringify(data));
-        } catch { /* storage full — silently ignore */ }
-    }
-}
-
-// ── GLOBAL RUNTIME STATE ──────────────────────────────────────
-// These are initialised here so every other module can reference
-// window.playlist etc. without caring about load order.
-window.playlist              = [];
-window.musicPlaylist         = [];
-window.currentTrack          = 0;
-window.currentMusicTrack     = 0;
-window.resumeIndex           = -1;
-window.gridCellsRef          = [];
-window.layoutHistory         = [];
-window.liveWatchers          = [];
-window.originalPlaylist      = [];
-window.isEditingLayout       = false;
-window.isPaused              = false;
-window.isGlobalMuted         = true;
-window.isCtrlDown            = false;
-window.isShiftDown           = false;
-window.isExternalUpdate      = false;
-window.liveSelectedIndices   = [];
-window.gridQueueMap          = {};
-window.currentLiveZonePointer = 0;
-
-// cellTimers is managed as a Set in media-engine.js (via _cellTimerSet).
-// Kept here as a shim for any legacy code that still reads window.cellTimers.
-window.cellTimers = [];
-
-// ── DEFAULT KEYBINDINGS ───────────────────────────────────────
-const DEFAULT_KEYS = {
-    play:       'Space',
-    forward:    'ArrowRight',
-    rewind:     'ArrowLeft',
-    fullscreen: 'KeyF',
-    next:       'KeyN',
-    home:       'KeyH',
-    minimize:   'KeyM',
-    sidebar:    'KeyS',
-    hideUI:     null,
-    moveApp:    'AuxClick1',
-    clearImg:   null,
-    clearVid:   null,
-    clearAll:   null,
-    replayA:    null,
-    replayB:    null,
-    forward5:   null,
-    backward5:  null,
-    forward30:  null,
-    backward30: null,
-    // RAM flush shortcut (default: G)
-    ramFlush:   'KeyG'
-};
-
-// ── DEFAULT SETTINGS ──────────────────────────────────────────
-const DEFAULT_SETTINGS = {
-    mode:             'video',
-    duration:         5000,
-    shuffle:          false,
-    color:            '#6366f1',
-    bgIndex:          0,
-    customBg:         null,
-    bgImage:          null,
-    oled:             false,
-    wakeLock:         false,
-    gridSize:         '1',
-    effect:           'none',
-    effectSpeed:      0.8,
-    gapSize:          10,
-    gridRoundness:    0,
-    ratioTolerance:   0.3,
-    randomDuration:   false,
-    minRandomDuration: 5,
-    maxRandomDuration: 30,
-    showCountdown:    false,
-    randomEffect:     false,
-    enableLiveFolder: false,
-    advanceRatioMode: false,
-    showTransformBar: false,
-    rotateFill:       false,
-    showThumbnails:   false,
-    liveSortMode:     'sequential',
-    liveModifiers:    'shift_ctrl',
-    liveFolders:      [],
-    showShortcuts:    true,
-    showQueueInfo:    false,
-    autoFallback:     true,
-    globalVolume:     1.0,
-    floatRoundness:   0,
-    floatOpacity:     1.0,
-    hybridMode:       false,
-    appOpacity:       1.0,
-    sidebarWidth:     null,
-    borderSettings: {
-        hue:       0,
-        lightness: 50,
-        opacity:   1.0
+{
+  "name": "ultimate-player",
+  "version": "1.3.0",
+  "description": "Ultimate Player",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "keywords": [],
+  "author": "PoXeR (Coded by Gemeni 3)",
+  "license": "ISC",
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "electron": "^42.3.0",
+    "electron-builder": "^26.15.0",
+    "exceljs": "^4.4.0"
+  },
+  "overrides": {
+    "lodash.isequal": "^4.5.0",
+    "inflight": "^1.0.6",
+    "rimraf": "^6.1.3",
+    "glob": "^13.0.6",
+    "boolean": "^3.2.0",
+    "fstream": "^1.0.12",
+    "uuid": "^14.0.0"
+  },
+  "resolutions": {
+    "lodash.isequal": "^4.5.0",
+    "inflight": "^1.0.6",
+    "rimraf": "^6.1.3",
+    "glob": "^13.0.6",
+    "boolean": "^3.2.0",
+    "fstream": "^1.0.12",
+    "uuid": "^14.0.0"
+  },
+  "build": {
+    "appId": "com.ultimate.player",
+    "productName": "Ultimate Player",
+    "fileAssociations": [
+      {
+        "ext": [
+          "mp4",
+          "mkv",
+          "webm",
+          "avi",
+          "mov",
+          "ts",
+          "m2ts",
+          "wmv",
+          "flv",
+          "3gp",
+          "ogv"
+        ],
+        "name": "Video File",
+        "role": "Viewer"
+      },
+      {
+        "ext": [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "ico"
+        ],
+        "name": "Image File",
+        "role": "Viewer"
+      }
+    ],
+    "directories": {
+      "output": "dist"
     },
-    notificationSettings: {
-        master: true,
-        media:  true,
-        grid:   true,
-        queue:  true,
-        file:   true,
-        live:   true,
-        system: true
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
     },
-    filters: {
-        brightness: 100,
-        contrast:   100,
-        saturate:   100,
-        hue:        0,
-        invert:     0,
-        target:     'all'
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": true,
+      "runAfterFinish": true,
+      "shortcutName": "Ultimate Player"
     }
-};
-
-// ── DEEP MERGE ────────────────────────────────────────────────
-// Shallow spread ( {...defaults, ...saved} ) silently drops new nested
-// keys when the user has an old settings file that already has the parent
-// key. E.g. if `filters` is in the saved file but lacks `target`, the
-// default `target` is never applied. This fixes that.
-function deepMerge(defaults, saved) {
-    const result = { ...defaults };
-    for (const key of Object.keys(saved)) {
-        if (
-            saved[key] !== null &&
-            typeof saved[key] === 'object' &&
-            !Array.isArray(saved[key]) &&
-            typeof defaults[key] === 'object' &&
-            defaults[key] !== null &&
-            !Array.isArray(defaults[key])
-        ) {
-            result[key] = deepMerge(defaults[key], saved[key]);
-        } else {
-            result[key] = saved[key];
-        }
-    }
-    return result;
-}
-
-// ── BOOTSTRAP ─────────────────────────────────────────────────
-// Merge saved shortcuts on top of defaults so newly added actions
-// always have at least a null slot (no "undefined" reads elsewhere).
-const savedKeys = readJSON(FILES.shortcuts, {});
-window.keyMap = { ...DEFAULT_KEYS, ...savedKeys };
-
-window.savedLayouts = readJSON(FILES.layouts, []);
-
-const savedSettings = readJSON(FILES.settings, {});
-window.settings     = deepMerge(DEFAULT_SETTINGS, savedSettings);
-
-// Ensure liveFolders is always an array (could be corrupted on disk)
-if (!Array.isArray(window.settings.liveFolders)) {
-    window.settings.liveFolders = [];
-}
-
-// ── SAVE LOGIC ────────────────────────────────────────────────
-let _saveTimer = null;
-
-/**
- * Debounced save — coalesces rapid setting changes into one disk write.
- * Always flushes synchronously on beforeunload.
- */
-window.saveConfig = function() {
-    if (_saveTimer) clearTimeout(_saveTimer);
-    _saveTimer = setTimeout(() => {
-        _performSave();
-        _saveTimer = null;
-    }, 500);
-};
-
-function _performSave() {
-    writeInternal(FILES.settings,  window.settings);
-    writeInternal(FILES.layouts,   window.savedLayouts);
-    writeInternal(FILES.shortcuts, window.keyMap);
-}
-
-window.addEventListener('beforeunload', () => {
-    // Cancel pending debounced save and do it synchronously now
-    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
-    _performSave();
-
-    // Persist resume position if there is a valid current track
-    if (
-        window.playlist.length > 0 &&
-        window.currentTrack >= 0 &&
-        window.currentTrack < window.playlist.length
-    ) {
-        const file = window.playlist[window.currentTrack];
-        writeInternal(FILES.state, { fileName: file.name });
-    }
-});
-
-// Custom layout (layout editor)
-window.saveCustomLayout = data  => writeInternal(FILES.custom, data);
-window.getCustomLayout  = ()    => readJSON(FILES.custom, null);
-window.saveState        = ()    => {};   // no-op — state is saved in beforeunload
-
-// ── BACKGROUND THEMES ─────────────────────────────────────────
-const BG_THEMES = [
-    { bg: '#0f0f13', sb: '#18181b', card: '#27272a' },   // 0 Dark (default)
-    { bg: '#000000', sb: '#000000', card: '#111111' },   // 1 OLED Black
-    { bg: '#0b1120', sb: '#111827', card: '#1f2937' },   // 2 Midnight Blue
-    { bg: '#171717', sb: '#262626', card: '#404040' },   // 3 Charcoal
-    { bg: '#05100b', sb: '#0a1f16', card: '#122e22' },   // 4 Forest
-    { bg: '#160808', sb: '#290f0f', card: '#421616' },   // 5 Crimson
-    { bg: '#0f0e16', sb: '#181624', card: '#252236' },   // 6 Purple Dusk
-    { bg: '#16110d', sb: '#241c15', card: '#362a20' }    // 7 Sepia
-];
-
-// ── THEME SETTERS ─────────────────────────────────────────────
-window.setTheme = function(color, save = true) {
-    window.settings.color = color;
-    document.documentElement.style.setProperty('--accent', color);
-    if (save) window.saveConfig();
-};
-
-window.setBg = function(index, save = true) {
-    if (!BG_THEMES[index]) index = 0;
-    window.settings.bgIndex  = index;
-    window.settings.customBg = null;
-    window.settings.bgImage  = null;
-    window.settings.oled     = (index === 1);
-    document.documentElement.style.setProperty('--bg-image', 'none');
-    const t = BG_THEMES[index];
-    _applyBg(t.bg, t.sb, t.card);
-    if (save) window.saveConfig();
-};
-
-window.setCustomBg = function(hex, save = true) {
-    window.settings.bgIndex  = -1;
-    window.settings.customBg = hex;
-    window.settings.bgImage  = null;
-    document.documentElement.style.setProperty('--bg-image', 'none');
-    _applyBg(hex, _adjustBrightness(hex, 10), _adjustBrightness(hex, 20));
-    if (save) window.saveConfig();
-};
-
-window.setBgImage = function(url) {
-    window.settings.bgIndex  = -1;
-    window.settings.customBg = null;
-    window.settings.bgImage  = url;
-    window.settings.oled     = false;
-    document.documentElement.style.setProperty('--bg-image', `url(${url})`);
-    window.saveConfig();
-};
-
-function _applyBg(bg, sb, card) {
-    const root = document.documentElement;
-    root.style.setProperty('--bg-color',    bg);
-    root.style.setProperty('--sidebar-bg',  sb);
-    root.style.setProperty('--card-bg',     card);
-}
-
-/**
- * Shift all three RGB channels of a hex colour by `amt`.
- * Original mutated the `col` parameter — this version does not.
- */
-function _adjustBrightness(hex, amt) {
-    let col = hex.startsWith('#') ? hex.slice(1) : hex;
-    const prefix = hex.startsWith('#') ? '#' : '';
-
-    const num = parseInt(col, 16);
-    const clamp = v => Math.max(0, Math.min(255, v));
-
-    const r = clamp(( num >> 16)         + amt);
-    const g = clamp(((num >>  8) & 0xFF) + amt);
-    const b = clamp(( num        & 0xFF) + amt);
-
-    return prefix + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+  },
+  "type": "commonjs"
 }
