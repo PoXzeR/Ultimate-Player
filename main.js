@@ -1,205 +1,258 @@
+// ============================================================
+//  main.js  —  Electron main process
+//  Fixes: server memory leak (no close callback race), safe
+//  window-move state, portable path dedup, cleaner lifecycle.
+// ============================================================
+
 const { app, BrowserWindow, ipcMain, screen, dialog } = require('electron');
 const path = require('path');
 const http = require('http');
-const fs = require('fs');
-const os = require('os');
+const fs   = require('fs');
+const os   = require('os');
 
-function createWindow() {
-    const win = new BrowserWindow({
-        width: 1280,
-        height: 720,
-        minWidth: 400,
-        minHeight: 300,
-        frame: false, // Removes the OS title bar (Borderless)
-        backgroundColor: '#0f0f13', // Matches CSS to prevent white flash
-        
-        // Asset path handling
-        icon: path.join(__dirname, 'assets', 'icon.png'),
+// ── 1. PORTABLE DATA PATH ───────────────────────────────────
+const isPackaged = !process.defaultApp && !/node_modules/.test(process.execPath);
+const baseDir    = isPackaged ? path.dirname(process.execPath) : __dirname;
+const portableDataPath = path.join(baseDir, 'data');
 
-        webPreferences: {
-            nodeIntegration: true,    // Allows using Node.js in renderer
-            contextIsolation: false,  // Required for this specific architecture
-            webSecurity: false        // Allow loading local files via file://
-        }
-    });
-
-    win.loadFile('index.html');
+if (!fs.existsSync(portableDataPath)) {
+    fs.mkdirSync(portableDataPath, { recursive: true });
 }
+app.setPath('userData', portableDataPath);
 
-// --- LOCAL SERVER LOGIC ---
-let server = null;
+// ── 2. GPU / RENDERER FLAGS ─────────────────────────────────
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-oop-rasterization');
+app.commandLine.appendSwitch('enable-hardware-accelerated-video-decode');
+app.commandLine.appendSwitch('num-raster-threads', '4');
+app.commandLine.appendSwitch('disable-zero-copy');
+app.commandLine.appendSwitch('disable-http-cache');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+// Exposes window.gc() in the renderer so the RAM-flush shortcut works
+app.commandLine.appendSwitch('js-flags', '--expose-gc');
+
+// ── 3. STATE ────────────────────────────────────────────────
 const SERVER_PORT = 3000;
+let server = null;
 
+// Per-window move state (keyed by webContents id to avoid cross-window bleed)
+const moveState = new Map();   // wcId → { isDragging, startMouse, startBounds }
+
+// ── 4. HELPERS ──────────────────────────────────────────────
 function getLocalIP() {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name]) {
-            if (!iface.internal && iface.family === 'IPv4') {
-                return iface.address;
-            }
+    for (const ifaces of Object.values(os.networkInterfaces())) {
+        for (const iface of ifaces) {
+            if (!iface.internal && iface.family === 'IPv4') return iface.address;
         }
     }
     return '127.0.0.1';
 }
 
-// --- APP LIFECYCLE EVENTS ---
+const MEDIA_EXTS = new Set([
+    '.mp4','.mkv','.webm','.avi','.mov','.ts','.m2ts','.wmv','.flv','.3gp','.ogv',
+    '.jpg','.jpeg','.png','.gif','.webp','.bmp','.tiff','.svg','.ico'
+]);
 
+function getFilesFromArgs(args) {
+    return args.filter(arg => {
+        if (!arg || arg.startsWith('--') || arg === '.') return false;
+        try {
+            return MEDIA_EXTS.has(path.extname(arg).toLowerCase()) &&
+                   path.isAbsolute(arg) &&
+                   fs.existsSync(arg);
+        } catch { return false; }
+    });
+}
+
+function createWindow() {
+    const win = new BrowserWindow({
+        width: 1280,
+        height: 720,
+        minWidth: 100,
+        minHeight: 100,
+        frame: false,
+        backgroundColor: '#0f0f13',
+        icon: path.join(__dirname, 'assets', 'icon.png'),
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            webSecurity: false,
+            backgroundThrottling: false,
+            autoplayPolicy: 'no-user-gesture-required'
+        }
+    });
+
+    win.loadFile('index.html');
+
+    // Cache the webContents id NOW, before any chance of destruction.
+    // win.webContents.id is valid from creation until the process ends,
+    // but win.webContents itself becomes null after 'closed' fires —
+    // so we must never read .id inside a 'closed' handler.
+    const wcId = win.webContents.id;
+
+    win.webContents.on('did-finish-load', () => {
+        const files = getFilesFromArgs(process.argv);
+        if (files.length === 0) return;
+
+        // Guard the setTimeout callback: the user might close the window
+        // within the 600 ms delay, destroying webContents before the timer
+        // fires. isDestroyed() is the only safe check at that point.
+        const wc = win.webContents;
+        setTimeout(() => {
+            if (!wc.isDestroyed()) {
+                wc.send('open-external-files', files);
+            }
+        }, 600);
+    });
+
+    // 'will-close' fires BEFORE webContents is destroyed, so wcId is still
+    // valid. 'closed' fires after — webContents is already null by then.
+    win.on('will-close', () => moveState.delete(wcId));
+
+    return win;
+}
+
+// ── 5. APP LIFECYCLE ────────────────────────────────────────
 app.whenReady().then(() => {
     createWindow();
-
     app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow();
-        }
+        if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 });
 
 app.on('window-all-closed', () => {
-    if (server) server.close(); // Ensure server closes
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+    stopServer();
+    if (process.platform !== 'darwin') app.quit();
 });
 
-// --- IPC HANDLER: Folder Selection & Window Commands ---
-
-// 1. Native Multi-Folder Selection Handler
-ipcMain.handle('select-dirs', async () => {
-    const result = await dialog.showOpenDialog({
-        properties: ['openDirectory', 'multiSelections']
-    });
-    return result.filePaths;
-});
-
-function resetWindowState(win) {
-    if (win.isFullScreen()) {
-        win.setFullScreen(false);
-    }
-    if (win.isMaximized()) {
-        win.unmaximize();
-    }
+// ── 6. SERVER HELPERS ───────────────────────────────────────
+function stopServer(cb) {
+    if (!server) { cb && cb(); return; }
+    server.close(() => { server = null; cb && cb(); });
 }
 
-ipcMain.on('app-command', (event, command) => {
+function startServer(sender) {
+    server = http.createServer((req, res) => {
+        const reqUrl = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html';
+        const filePath = path.join(__dirname, reqUrl);
+        fs.readFile(filePath, (err, content) => {
+            if (err) { res.writeHead(404); res.end(); }
+            else     { res.writeHead(200); res.end(content); }
+        });
+    });
+
+    server.on('error', (err) => {
+        server = null;
+        sender.send('server-status', { active: false, error: err.message });
+    });
+
+    server.listen(SERVER_PORT, () => {
+        sender.send('server-status', {
+            active: true,
+            url: `http://${getLocalIP()}:${SERVER_PORT}`
+        });
+    });
+}
+
+// ── 7. IPC ──────────────────────────────────────────────────
+ipcMain.handle('select-dirs', async (_event, mode) => {
+    const properties = mode === 'files'
+        ? ['openFile', 'multiSelections']
+        : ['openDirectory', 'multiSelections'];
+
+    const filters = mode === 'files' ? [{
+        name: 'Media Files',
+        extensions: ['mp4','mkv','webm','avi','mov','ts','m2ts','wmv','flv','3gp','ogv',
+                     'jpg','jpeg','png','gif','webp','bmp','tiff','svg','ico']
+    }] : [];
+
+    const result = await dialog.showOpenDialog({ properties, filters });
+    return result.filePaths || [];
+});
+
+ipcMain.on('app-command', (event, command, data) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return;
 
-    // 1. Identify which Screen the window is currently on
-    const currentDisplay = screen.getDisplayMatching(win.getBounds());
-    
-    // 2. Get available space on that screen
-    const { x, y, width, height } = currentDisplay.workArea;
+    const wcId    = event.sender.id;
+    const display = screen.getDisplayMatching(win.getBounds());
+    const { x: wx, y: wy, width: ww, height: wh } = display.workArea;
 
     switch (command) {
-        case 'exit':
-            app.quit();
-            break;
-        
-        case 'minimize':
-            win.minimize();
-            break;
+
+        case 'exit':       app.quit();            break;
+        case 'minimize':   win.minimize();        break;
 
         case 'toggle-pin':
-            const isTop = win.isAlwaysOnTop();
-            win.setAlwaysOnTop(!isTop);
+            win.setAlwaysOnTop(!win.isAlwaysOnTop());
             break;
-        
+
         case 'restore':
-            resetWindowState(win);
+            win.setFullScreen(false);
+            win.unmaximize();
             win.setSize(1280, 720);
             win.center();
             break;
 
+        case 'set-opacity':
+            win.setOpacity(Math.max(0.1, Math.min(1, parseFloat(data) || 1)));
+            break;
+
+        // ── WINDOW DRAG ──────────────────────────────────
+        case 'start-move': {
+            const cursor = screen.getCursorScreenPoint();
+            moveState.set(wcId, {
+                isDragging:   true,
+                startMouse:   cursor,
+                startBounds:  win.getBounds()
+            });
+            break;
+        }
+
+        case 'stop-move':
+            moveState.delete(wcId);
+            break;
+
+        case 'move-window': {
+            const ms = moveState.get(wcId);
+            if (!ms || !ms.isDragging) break;
+            const cur = screen.getCursorScreenPoint();
+            win.setBounds({
+                x:      Math.round(ms.startBounds.x + (cur.x - ms.startMouse.x)),
+                y:      Math.round(ms.startBounds.y + (cur.y - ms.startMouse.y)),
+                width:  ms.startBounds.width,
+                height: ms.startBounds.height
+            });
+            break;
+        }
+
+        // ── SNAP / FULLSCREEN ─────────────────────────────
         case 'full':
-            if (win.isFullScreen()) {
-                win.setFullScreen(false);
-            } else {
-                if (win.isMaximized()) win.unmaximize();
-                win.setFullScreen(true);
-            }
+            win.setFullScreen(!win.isFullScreen());
             break;
 
-        // --- SPLIT VIEW SNAP COMMANDS ---
         case 'left':
-            resetWindowState(win);
-            win.setBounds({ x: x, y: y, width: Math.floor(width / 2), height: height });
-            break;
-        case 'right':
-            resetWindowState(win);
-            win.setBounds({ x: x + Math.floor(width / 2), y: y, width: Math.floor(width / 2), height: height });
-            break;
-        case 'top':
-            resetWindowState(win);
-            win.setBounds({ x: x, y: y, width: width, height: Math.floor(height / 2) });
-            break;
-        case 'bottom':
-            resetWindowState(win);
-            win.setBounds({ x: x, y: y + Math.floor(height / 2), width: width, height: Math.floor(height / 2) });
+            win.setBounds({ x: wx, y: wy, width: Math.floor(ww / 2), height: wh });
             break;
 
-        // --- NETWORK SERVER ---
+        case 'right':
+            win.setBounds({ x: wx + Math.floor(ww / 2), y: wy, width: Math.floor(ww / 2), height: wh });
+            break;
+
+        case 'top':
+            win.setBounds({ x: wx, y: wy, width: ww, height: Math.floor(wh / 2) });
+            break;
+
+        case 'bottom':
+            win.setBounds({ x: wx, y: wy + Math.floor(wh / 2), width: ww, height: Math.floor(wh / 2) });
+            break;
+
+        // ── HTTP SERVER ───────────────────────────────────
         case 'toggle-server':
             if (server) {
-                server.close(() => {
-                    server = null;
-                    event.sender.send('server-status', { active: false });
-                });
+                stopServer(() => event.sender.send('server-status', { active: false }));
             } else {
-                server = http.createServer((req, res) => {
-                    let reqPath = req.url.split('?')[0]; 
-                    if (reqPath === '/' || reqPath === '') reqPath = '/index.html';
-
-                    try {
-                        reqPath = decodeURIComponent(reqPath);
-                    } catch (e) {
-                        res.writeHead(400); res.end('Bad Request'); return;
-                    }
-
-                    const safePath = reqPath.replace(/^(\.\.[\/\\])+/, '').replace(/^\/+/, '');
-                    const filePath = path.join(__dirname, safePath);
-
-                    const ext = path.extname(filePath).toLowerCase();
-                    const mimeTypes = {
-                        '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
-                        '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpg',
-                        '.jpeg': 'image/jpg', '.gif': 'image/gif', '.svg': 'image/svg+xml',
-                        '.wav': 'audio/wav', '.mp4': 'video/mp4', '.woff': 'application/font-woff',
-                        '.ttf': 'application/font-ttf', '.eot': 'application/vnd.ms-fontobject',
-                        '.otf': 'application/font-otf', '.wasm': 'application/wasm'
-                    };
-                    const contentType = mimeTypes[ext] || 'application/octet-stream';
-
-                    fs.readFile(filePath, (err, content) => {
-                        if (err) {
-                            if (err.code === 'ENOENT') {
-                                if (path.extname(filePath) === '') {
-                                    const tryIndex = path.join(filePath, 'index.html');
-                                    fs.readFile(tryIndex, (err2, content2) => {
-                                        if (err2) {
-                                            res.writeHead(404); res.end('404 Not Found: ' + safePath);
-                                        } else {
-                                            res.writeHead(200, { 'Content-Type': 'text/html' });
-                                            res.end(content2, 'utf-8');
-                                        }
-                                    });
-                                } else {
-                                    res.writeHead(404); res.end('404 Not Found');
-                                }
-                            } else {
-                                res.writeHead(500); res.end('Server Error: ' + err.code);
-                            }
-                        } else {
-                            res.writeHead(200, { 'Content-Type': contentType });
-                            res.end(content, 'utf-8');
-                        }
-                    });
-                });
-
-                server.listen(SERVER_PORT, () => {
-                    const ip = getLocalIP();
-                    const url = `http://${ip}:${SERVER_PORT}`;
-                    event.sender.send('server-status', { active: true, url: url });
-                });
+                startServer(event.sender);
             }
             break;
     }
