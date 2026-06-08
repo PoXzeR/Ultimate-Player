@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ultimate Player</title>
     <!-- Linking Styles -->
     <link rel="stylesheet" href="style.css">
@@ -190,7 +190,7 @@
             
             <!-- SIDEBAR HEADER: Title & Pin Button -->
             <div class="brand">
-                <span style="font-size:larger"> UltimatePlayer</span>
+                <span style="font-size:18px"> UltimatePlayer</span>
                 
                 <!-- Right Column: Pin Button + Badge -->
                 <div class="brand-right-col">
@@ -213,7 +213,6 @@
                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
                         <span style="font-size: 0.8rem;">Add Folder</span>
-                        <div class="mobile-hide"><span style="font-size: 0.7rem; opacity:0.8; font-weight:normal;">drag and drop folder</span></div>
                     </label>
 
                     <!-- ADD FILES -->
@@ -225,7 +224,6 @@
                             <line x1="9" y1="15" x2="15" y2="15"></line>
                         </svg>
                         <span style="font-size: 0.8;">Add Files</span>
-                        <div class="mobile-hide"><span style="font-size: 0.7rem; opacity:0.7; font-weight:normal;">drag and drop Files</span></div>
                     </label>
                 </div>
                 
@@ -258,6 +256,16 @@
                         <button id="shuffleBtn" class="tool-btn" title="Shuffle">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
                         </button>
+
+                        <!-- WEB VIDEO BUTTON (Opens Manager) -->
+                        <button id="addWebVideoBtn" class="tool-btn" title="Web Video Manager" onclick="app.openWebManager()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                            </svg>
+                        </button>
+
                         <button id="globalMuteBtn" class="tool-btn" title="Mute/Unmute All">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                         </button>
@@ -365,7 +373,7 @@
                     <div class="music-header" onclick="app.toggleMusicPanel()" style="cursor:pointer;">
                         <span>🎵 Background Music</span>
                         <div class="toggle-icon-btn" id="musicToggleBtn">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                         </div>
@@ -473,14 +481,20 @@
                     </label>
                 </div>
 
-                <button class="upload-btn secondary" onclick="app.resetLayout()" style="margin-top:20px; flex-direction: row; gap: 8px; height: 50px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <polyline points="1 20 1 14 7 14"></polyline>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                    </svg>
-                    Clear Grid
-                </button>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="upload-btn secondary" onclick="window.addFloatingCell()" style="flex: 1; flex-direction: row; gap: 8px; height: 50px; border-color: #6366f1; color: #a5b4fc;">
+                        Float Cell
+                    </button>
+
+                    <button class="upload-btn secondary" onclick="app.resetLayout()" style="flex: 1; flex-direction: row; gap: 8px; height: 50px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Clear
+                    </button>
+                </div>
                 
                 <div class="editor-controls" style="margin-top:15px; background:rgba(255,255,255,0.05); padding:10px; border-radius:6px;">
                     <div style="margin-bottom:10px; font-weight:bold; font-size:0.8rem; color:#aaa;">Selection Modes:</div>
@@ -607,7 +621,14 @@
                         </div>
                     </div>
                 </div>
-                
+
+                <div class="section-title" style="margin-top:20px;">App Transparency</div>
+                <div class="setting-group">
+                    <label>Window Opacity: <strong id="appOpacityVal">100</strong>%</label>
+                    <input type="range" id="appOpacityInput" min="0.1" max="1.0" step="0.01" value="1.0">
+                    <label style="font-size:0.7rem; color:#666; margin-top:4px;">(Affects the entire window and all UI elements)</label>
+                </div>
+
                 <div class="section-title" style="margin-top:20px;">Grid Options</div>
                 <div class="setting-group">
                     <label>Items per Screen</label>
@@ -637,15 +658,16 @@
                             <input type="range" min="0" max="50" value="0" id="gridRoundInput">
                         </div>
                         <div class="setting-group">
-                            <label>Grid Max FPS: <strong id="gridFpsVal">60</strong></label>
-                            <input type="range" min="1" max="60" value="60" id="gridFpsInput">
-                            <label style="font-size:0.7rem; color:#666; margin-top:4px;">(Lower values save CPU/GPU. 60 = Native Speed)</label>
+                            <label>Float Cell Roundness: <strong id="floatRoundVal">0</strong>px</label>
+                            <input type="range" min="0" max="100" value="0" id="floatRoundInput">
                         </div>
-                        
-                        <!-- RATIO TOLERANCE SLIDER -->
+                        <div class="setting-group">
+                            <label>Float Cell Opacity: <strong id="floatOpacityVal">1.0</strong></label>
+                            <input type="range" min="0" max="1" step="0.01" value="1" id="floatOpacityInput">
+                        </div>
                         <div class="setting-group" style="border-top: 1px solid #444; padding-top: 15px; margin-top: 15px;">
                             <label>Auto-Ratio Tolerance: <strong id="ratioTolVal">0.3</strong></label>
-                            <input type="range" min="0" max="1" step="0.05" value="0.3" id="ratioTolInput">
+                            <input type="range" min="0" max="1" step="0.01" value="0.3" id="ratioTolInput">
                             <label style="font-size:0.7rem; color:#aaa; margin-top:4px; display:block; line-height: 1.3;">
                                 <strong>0.0</strong> = Strict Exact Match.<br>
                                 <strong>0.3</strong> = Standard (Allows slightly different shapes).<br>
@@ -668,31 +690,69 @@
 
                 <div id="borderSettingsBody" class="visual-body options-body collapsed">
                     <div style="padding: 10px;">
-                        
-                        <!-- 1. Rainbow Color Slider -->
                         <div class="setting-group">
                             <label>Border Color</label>
                             <input type="range" min="0" max="360" value="0" id="borderHueInput" class="rainbow-slider" oninput="app.updateBorderSettings()">
                         </div>
-
-                        <!-- 2. Transparency Slider -->
                         <div class="setting-group">
                             <label>Transparency: <strong id="borderAlphaVal">1.0</strong></label>
                             <input type="range" min="0" max="1" step="0.05" value="1" id="borderAlphaInput" oninput="app.updateBorderSettings()">
                         </div>
-
-                        <!-- 3. Brightness / Mix Slider (Black <-> Color <-> White) -->
                         <div class="setting-group">
                             <label>Brightness / Mix: <strong id="borderLightVal">Color</strong></label>
-                            
-                            <!-- Range: 0 (Black) to 50 (Color) to 100 (White) -->
                             <input type="range" min="0" max="100" value="50" id="borderLightInput" class="lightness-slider" oninput="app.updateBorderSettings()">
-                            
                             <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#888; margin-top:4px; font-weight:bold;">
                                 <span>Black</span>
                                 <span>Pure Color</span>
                                 <span>White</span>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOTIFICATIONS SECTION -->
+                <div class="visual-header options-header" onclick="app.toggleNotificationsPanel()" style="margin-top:10px; margin-bottom:10px;">
+                    <span>Notifications</span>
+                    <div class="toggle-icon-btn" id="notificationsToggleBtn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <div id="notificationsBody" class="visual-body options-body collapsed">
+                    <div style="padding: 10px;">
+                        
+                        <!-- MASTER TOGGLE -->
+                        <div class="check-row" style="background:rgba(255,255,255,0.08); padding:10px; border-radius:6px; margin-bottom:15px; border:1px solid #6366f1;">
+                            <label style="color: #6366f1; font-weight: bold; flex:1; cursor:pointer;" for="notifMaster">Enable All Notifications</label>
+                            <input type="checkbox" id="notifMaster" onchange="app.toggleNotification('master')">
+                        </div>
+
+                        <!-- CATEGORY TOGGLES -->
+                        <div class="check-row">
+                            <label for="notifMedia">Media Events (Loops, A-B Repeat)</label>
+                            <input type="checkbox" id="notifMedia" onchange="app.toggleNotification('media')">
+                        </div>
+                        <div class="check-row">
+                            <label for="notifGrid">Grid & Layout (Display, Delete)</label>
+                            <input type="checkbox" id="notifGrid" onchange="app.toggleNotification('grid')">
+                        </div>
+                        <div class="check-row">
+                            <label for="notifQueue">Queue (Shuffle, Clear, Add)</label>
+                            <input type="checkbox" id="notifQueue" onchange="app.toggleNotification('queue')">
+                        </div>
+                        <div class="check-row">
+                            <label for="notifFile">File Loading (Scanning, Duplicates)</label>
+                            <input type="checkbox" id="notifFile" onchange="app.toggleNotification('file')">
+                        </div>
+                        <div class="check-row">
+                            <label for="notifLive">Live Folders (Watchers, Motion)</label>
+                            <input type="checkbox" id="notifLive" onchange="app.toggleNotification('live')">
+                        </div>
+                        <div class="check-row">
+                            <label for="notifSystem">System (Server, Hardware)</label>
+                            <input type="checkbox" id="notifSystem" onchange="app.toggleNotification('system')">
                         </div>
 
                     </div>
@@ -748,12 +808,25 @@
                     <div style="padding: 10px;">
                         <div class="setting-group">
                             <label>Image Duration: <strong id="slideTimeVal">5</strong>s</label>
-                            <input type="range" min="2" max="30" value="5" id="slideTimeInput">
+                            <input type="range" min="2" max="120" value="5" id="slideTimeInput">
                             
-                            <!-- NEW RANDOM DURATION CHECKBOX -->
+                            <!-- NEW RANDOM DURATION CHECKBOX & SETTINGS -->
                             <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; justify-content: flex-end;">
                                 <input type="checkbox" id="randomDurToggle" style="width: 16px; height: 16px;">
-                                <label for="randomDurToggle" style="margin: 0; font-size: 0.8rem; color: #ccc; cursor: pointer;">Random Duration (5s - 30s)</label>
+                                <label for="randomDurToggle" style="margin: 0; font-size: 0.8rem; color: #ccc; cursor: pointer;">Random Duration</label>
+                            </div>
+
+                            <!-- HIDDEN CONTAINER FOR RANDOM SLIDERS -->
+                            <div id="randomDurSettings" style="display:none; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; margin-top:5px; border:1px solid #444;">
+                                <div style="margin-bottom:8px;">
+                                    <label style="font-size:0.8rem; margin-bottom:2px; color:#aaa;">Min Duration: <strong id="minRandVal">5</strong>s</label>
+                                    <input type="range" id="minRandInput" min="4" max="120" value="5">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.8rem; margin-bottom:2px; color:#aaa;">Max Duration: <strong id="maxRandVal">30</strong>s</label>
+                                    <input type="range" id="maxRandInput" min="4" max="120" value="30">
+                                </div>
+                                <div style="font-size:0.65rem; color:#666; margin-top:4px; text-align:right;">(Min diff: 5s)</div>
                             </div>
 
                             <label style="font-size:0.7rem; color:#666; margin-top:4px;">(Videos always play full duration)</label>
@@ -791,6 +864,28 @@
                             <input type="checkbox" id="shortcutsToggle" checked>
                         </div>
                         <div class="check-row">
+                            <label>Advance option for ratio</label>
+                            <input type="checkbox" id="advanceRatioToggle">
+                        </div>
+                        <div class="check-row">
+                            <label>Show Thumbnails in Queue</label>
+                            <input type="checkbox" id="thumbnailToggle">
+                        </div>
+                        <div class="check-row">
+                            <label>Show Countdown on Hover</label>
+                            <input type="checkbox" id="countdownToggle">
+                        </div>
+                        <div class="check-row">
+                            <label>Show Transform Bar on Hover</label>
+                            <input type="checkbox" id="transformBarToggle">
+                        </div>
+                        <div class="check-row" id="rotateFillRow" style="display:none; padding-left: 20px; border-bottom: none;">
+                            <label style="font-size: 0.8rem; color: #aaa;">↳ Auto-Stretch rotated media (Fill Cell)</label>
+                            <input type="checkbox" id="rotateFillToggle">
+                        </div>
+                        
+
+                        <div class="check-row">
                             <label>Show Queue File Info (Res/Ratio)</label>
                             <input type="checkbox" id="queueInfoToggle">
                         </div>
@@ -798,8 +893,13 @@
                         <label style="font-size:0.7rem; color:#666; display:block;">
                             (Calculates Resolution & Aspect Ratio. May slow down large lists.)
                         </label>
-                        
-                        <!-- NEW LIVE FOLDER TOGGLE -->
+                        <div class="check-row">
+                            <label>Hybrid Mode (Images on CPU / Video on GPU)</label>
+                            <input type="checkbox" id="hybridToggle">
+                        </div>
+                        <label style="font-size:0.7rem; color:#666; display:block; margin-bottom:10px;">
+                            (Offloads Image processing to CPU to keep GPU free for Videos.)
+                        </label>
                         <div class="check-row" style="border-top: 1px solid #444; padding-top: 10px; margin-top: 5px;">
                             <label style="color: #ec4899; font-weight: bold;">Enable Live Folder Motion</label>
                             <input type="checkbox" id="liveFolderToggle">
@@ -839,6 +939,45 @@
         </div>
     </div>
 
+    <!-- WEB VIDEO MANAGER MODAL (THE NEW PAGE) -->
+    <div class="modal-overlay" id="webVideoModal">
+        <div class="modal" style="width: 550px; height: 550px;">
+            <div class="modal-header">
+                <h2>Web Video Manager</h2>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+                
+                <p style="color: #888; font-size: 0.9rem;">
+                    Support formats: <strong>MP4, MKV, TS</strong>. Paste URLs below. 
+                </p>
+
+                <!-- URL Input Area -->
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <textarea id="webUrlInput" placeholder="Paste URL(s) here...&#10;(Separate multiple links with Enter or Space)" 
+                              style="width: 100%; height: 100px; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #444; color: white; border-radius: 8px; font-family: monospace; resize: none;"></textarea>
+                    
+                    <button class="upload-btn primary-folder-btn" onclick="app.addWebUrls()" style="height: 40px; flex-direction: row; gap: 10px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add to Queue
+                    </button>
+                </div>
+
+                <div class="section-title">Added Web Videos</div>
+                
+                <!-- Web Video List -->
+                <div id="webVideoList" class="playlist-items" style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid #333; flex: 1;">
+                    <!-- Items injected via JS -->
+                </div>
+
+            </div>
+            
+            <div class="modal-footer">
+                <button class="close-btn" onclick="app.closeWebManager()">Close Manager</button>
+            </div>
+        </div>
+    </div>
     <!-- LIVE FOLDER MANAGER MODAL -->
     <div class="modal-overlay" id="liveFolderModal">
         <div class="modal" style="width: 500px; height: 485px;">
@@ -846,11 +985,9 @@
                 <h2>Live Folder Manager</h2>
             </div>
             <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
-                
                 <p style="color: #888; font-size: 0.9rem;">
                     Monitoring folders for new images/videos. Content plays instantly upon detection. Subfolders are ignored.
                 </p>
-
                 <!-- Add Folder Button inside Modal -->
                 <button class="upload-btn primary-folder-btn" onclick="app.addLiveFolderDialog()" style="height: 50px; flex-direction: row; gap: 10px; border: 1px solid #6366f1;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -867,9 +1004,7 @@
                 <div id="liveFolderList" class="playlist-items" style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid #333;min-height: 120px;">
                     <!-- Items injected via JS -->
                 </div>
-
             </div>
-            
             <!-- UPDATED FOOTER -->
             <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
                 <button class="close-btn" onclick="app.clearLiveQueue()" style="height: 36px; width: auto; font-size: 0.8rem; padding: 0 15px; background: #3f3f46; color: #ffaaaa; border-color: #552222;">
@@ -880,7 +1015,6 @@
             </div>
         </div>
     </div>
-
     <!-- EXIT CONFIRMATION MODAL -->
     <div class="modal-overlay" id="exitModal">
         <div class="modal" style="width: 320px; height: auto;">
@@ -898,8 +1032,27 @@
             </div>
         </div>
     </div>
-
-    <!-- TOAST NOTIFICATION CONTAINER -->
+    <!-- CONTEXT MENU (Hidden by default) -->
+    <div id="gridContextMenu" class="context-menu">
+        <div class="ctx-item" onclick="app.ctxShowInQueue()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            Show in Queue
+        </div>
+        <div class="ctx-item" id="ctxBtnFolder" onclick="app.ctxShowInFolder()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            Show in Folder
+        </div>
+    </div>
+    <div id="playlistContextMenu" class="context-menu">
+        <div class="ctx-item" id="ctxPlyFolder" onclick="app.ctxPlyShowFolder()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            Show in Folder
+        </div>
+        <div class="ctx-item" onclick="app.ctxPlyShowInGrid()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            Show in Grid (Random)
+        </div>
+    </div>
     <div id="toast-container"></div>
 
     <script src="store.js"></script>
